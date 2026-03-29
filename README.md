@@ -2,16 +2,16 @@
 
 ## Overview
 
-`ProductSampleVSA` is a .NET 10 Web API sample demonstrating a small product catalog service using:
-- ASP.NET Core 10 Minimal API host with controllers
-- Entity Framework Core with SQL Server
-- FluentValidation for request validation
-- Global exception handling with ProblemDetails
-- Swagger/OpenAPI via built-in endpoint explorer
+`ProductSampleVSA` is a .NET 10 Web API sample, built as a modular, maintainable product catalog service.
 
-This repository is structured as a VSA-style sample with a controller-based feature module architecture.
+Key architecture details:
+- ASP.NET Core 10 Minimal API host + MVC controllers (`MapControllers`).
+- EF Core with SQL Server migrations (`AppDbContext`, `Migrations`).
+- FluentValidation (create/update/filter product requests).
+- Global exception handling with custom `GlobalExceptionHandler` and RFC 7807 Problem Details.
+- Swagger/OpenAPI in development (`AddOpenApi`, `MapOpenApi`).
 
-The primary feature set is around `Product` CRUD operations and filtered paging queries.
+This codebase uses a clear per-feature module layout under `Features/Products` with service abstraction, validators, mapping and DTO contracts.
 
 ## Project layout
 
@@ -91,10 +91,10 @@ We welcome contributions and improvements. For a first contribution:
 To add a new feature (e.g. `Orders`):
 1. Create a new feature folder under `Features/Orders`.
 2. Add MVC controller (`Controller/OrderController.cs`) and controller routes.
-3. Add service interface + implementation (`Services/IOrderService`, `Services/OrderService`) and register it in `Common/Extensions/ServiceCollectionExtensions.cs` inside `AddFeatures()`.
+3. Add service interface + implementation (`Services/IOrderService`, `Services/OrderService`) and register it in `Common/Extensions/ServiceCollectionExtensions.cs` inside `AddFeatureServices()`.
 4. Add domain models and DbSet in `Data/AppDbContext.cs`.
 5. Add request/response DTOs under `Contracts/Requests` and `Contracts/Responses`.
-6. Add FluentValidation validators under `Validators/` and register them with DI in `Program.cs`.
+6. Add FluentValidation validators under `Validators/`, then call `builder.Services.AddValidation()` in `Program.cs` (as implemented in `ProductSample.API/Program.cs`).
 7. Add a migration to persist schema changes (`dotnet ef migrations add OrderTable` and `dotnet ef database update`).
 
 ## Postman automated scenarios
