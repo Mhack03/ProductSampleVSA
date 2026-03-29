@@ -1,17 +1,16 @@
-using Microsoft.EntityFrameworkCore;
+using ProductSample.API.Common.Exceptions;
 using ProductSample.API.Common.Extensions;
-using ProductSample.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddFeatureServices();
+builder.Services.AddValidation();
+builder.Services.AddProductApi();
 
-// Database
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Feature registrations
-builder.Services.AddFeatures();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -20,6 +19,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+app.UseProductApiPipeline();
+app.MapControllers();
 
 app.Run();

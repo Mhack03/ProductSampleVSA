@@ -10,8 +10,8 @@ public static class QueryableExtensions
     /// </summary>
     public static IQueryable<T> ApplyPaging<T>(
         this IQueryable<T> query,
-        PaginationQuery pagination) => 
+        PaginationQuery pagination) =>
         query
-            .Skip((pagination.Page -1) * pagination.PageSize)
+            .Skip((pagination.Page - 1) * pagination.PageSize)
             .Take(pagination.PageSize);
 }

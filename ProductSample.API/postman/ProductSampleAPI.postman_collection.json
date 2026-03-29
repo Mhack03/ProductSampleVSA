@@ -1,0 +1,335 @@
+{
+  "info": {
+    "name": "ProductSample API - Automated Scenarios",
+    "_postman_id": "a7dc12e4-5c3b-4761-a231-eb2f6a328123",
+    "description": "API tests for ProductSampleVSA product endpoints. Replace {{baseUrl}} with your host + port.\nInstructions:\n1. In Postman, import this file.\n2. Create environment variable baseUrl (e.g. http://localhost:5000).\n3. Run requests in order 1..11; set createdProductId from step 1 automatically.\n4. Validate status codes and error responses for creation/update/conflict scenarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Create Product (valid)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Widget A\",\n  \"description\": \"First widget\",\n  \"price\": 9.99,\n  \"stock\": 100,\n  \"sku\": \"WIDGET-A-001\",\n  \"brand\": \"BrandX\",\n  \"category\": \"Widgets\",\n  \"weightKg\": 0.42\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const body = pm.response.json();",
+              "if (body && body.id) {",
+              "    pm.environment.set(\"createdProductId\", body.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Create Product (duplicate name -> 409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Widget A\",\n  \"description\": \"Another same name widget\",\n  \"price\": 12.99,\n  \"stock\": 50,\n  \"sku\": \"WIDGET-A-002\",\n  \"brand\": \"BrandX\",\n  \"category\": \"Widgets\",\n  \"weightKg\": 0.5\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"409 Conflict for duplicate product\", function () {",
+              "    pm.response.to.have.status(409);",
+              "});",
+              "pm.test(\"ProblemDetails title is Duplicate Product\", function () {",
+              "    const p = pm.response.json();",
+              "    pm.expect(p.title).to.eql(\"Duplicate Product\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Create Product (validation fail -> 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"\",\n  \"price\": 0,\n  \"stock\": -5\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"400 Bad Request for invalid create payload\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Validation errors are returned\", function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Get All Products (no filters)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/product"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test(\"has page results fields\", function () {",
+              "    pm.expect(body).to.have.property('items');",
+              "    pm.expect(body).to.have.property('totalCount');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Get All Products (filter by category)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/product?category=Widgets&page=1&pageSize=10"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test(\"returned items are list\", function () {",
+              "    pm.expect(body.items).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 - Get Product by ID (exists)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/product/{{createdProductId}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"200 OK when product exists\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test(\"Product has id and name\", function () {",
+              "    pm.expect(body).to.have.property('id');",
+              "    pm.expect(body).to.have.property('name');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 - Get Product by ID (not found -> 404)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/product/999999"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"404 Not Found for missing product\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 - Update Product (valid)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product/{{createdProductId}}"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Widget A Updated\",\n  \"description\": \"Updated description\",\n  \"price\": 11.95,\n  \"stock\": 120,\n  \"isActive\": true,\n  \"sku\": \"WIDGET-A-001\",\n  \"brand\": \"BrandX\",\n  \"category\": \"Widgets\",\n  \"weightKg\": 0.45\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"200 OK for update\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test(\"name updated\", function () {",
+              "    pm.expect(body.name).to.eql('Widget A Updated');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9a - Create Product (duplicate target for 409 update)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Widget A\",\n  \"description\": \"Another widget to trigger duplicate update\",\n  \"price\": 9.99,\n  \"stock\": 100,\n  \"sku\": \"WIDGET-A-002\",\n  \"brand\": \"BrandX\",\n  \"category\": \"Widgets\",\n  \"weightKg\": 0.42\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"201 Created for duplicate target product\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9 - Update Product (name conflicts existing -> 409)",
+
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/product/{{createdProductId}}"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Widget A\",\n  \"description\": \"Rename to existing product name\",\n  \"price\": 11.95,\n  \"stock\": 120,\n  \"isActive\": true,\n  \"sku\": \"WIDGET-A-001\",\n  \"brand\": \"BrandX\",\n  \"category\": \"Widgets\",\n  \"weightKg\": 0.45\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"409 if update duplicates existing name\", function () {",
+              "    pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Delete Product (valid)",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/product/{{createdProductId}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"204 No Content on delete\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Delete Product (not found -> 404)",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/product/999999"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"404 Not Found for delete missing product\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

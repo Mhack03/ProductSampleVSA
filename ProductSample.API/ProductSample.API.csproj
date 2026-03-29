@@ -29,6 +29,7 @@
     <Folder Include="Features\Products\Contracts\Responses\" />
     <Folder Include="Features\Products\Controller\" />
     <Folder Include="Features\Products\Exceptions\" />
+    <Folder Include="Features\Products\Mappers\" />
     <Folder Include="Features\Products\Models\" />
     <Folder Include="Features\Products\Queries\" />
     <Folder Include="Features\Products\Services\" />
